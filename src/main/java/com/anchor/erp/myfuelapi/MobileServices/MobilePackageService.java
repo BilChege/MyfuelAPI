@@ -10,6 +10,7 @@ import com.anchor.erp.myfuelapi.Domain.FuelUsage;
 import com.anchor.erp.myfuelapi.Domain.PackagePurchase;
 import com.anchor.erp.myfuelapi.Domain.Promotion;
 import com.anchor.erp.myfuelapi.Domain.Sambaza;
+import com.anchor.erp.myfuelapi.Domain.Smsnotification;
 import com.anchor.erp.myfuelapi.Domain.UserRedemptions;
 import com.anchor.erp.myfuelapi.Domain.Users;
 import com.anchor.erp.myfuelapi.MobileModels.Balances;
@@ -25,12 +26,14 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  *
  * @author nbs
  */
 
+@Transactional
 @Service
 public class MobilePackageService {
     
@@ -53,6 +56,10 @@ public class MobilePackageService {
     @Autowired
     @Qualifier("sambazaService")
     private GenericService sambazaService;
+    
+    @Autowired
+    @Qualifier("smsnotificationService")
+    private GenericService smsnotificationService;
     
     public List<FuelPackage> allPackages(){
         List<Bundle> bundles = (List<Bundle>) bundleService.findAll();
@@ -85,6 +92,17 @@ public class MobilePackageService {
         PackagePurchase savedPurchase = (PackagePurchase) packagePurchaseService.save(purchasetosave);
         MobilePurchase response = new MobilePurchase();       
         if (savedPurchase != null && !savedPurchase.equals(null)){
+            Smsnotification smsnotification = new Smsnotification();
+            smsnotification.setMsgTo("+254"+user.getPhone());
+            smsnotification.setMessage("You have successfully purchased a prepay fuel package worth "+savedPurchase.getBundle().getBundlevalue()+" which expires on "+savedPurchase.getExpirydate());
+            smsnotification.setPending(true);
+            smsnotification.setCreatedate(new Date());
+            smsnotification.setSent(false);
+            smsnotification.setError(false);
+            smsnotification.setDelivered(false);
+            smsnotification.setRetrycount(0);
+            smsnotification.setRejected(false);
+            smsnotificationService.save(smsnotification);
             FuelPackage fp = new FuelPackage();
             fp.setAmount(Double.parseDouble(choicefromuser.getBundlename()));
             fp.setPriceOfPackage(choicefromuser.getBundlevalue());
@@ -98,7 +116,7 @@ public class MobilePackageService {
             Balances b = getBalances(mobilebuyer.getId());
             response.setBalances(b);
             
-            }       
+        }       
         return  response;
     }
     
@@ -110,6 +128,7 @@ public class MobilePackageService {
             mobile.setId(p.getId());
             mobile.setPromodesc(p.getPromotiondesc());
             mobile.setPromoname(p.getPromotionname());
+            mobile.setPromocode(p.getPromocode());
             mobile.setPoints(p.getPoints());
             mobile.setExpiry(p.getExpirydate());
             ofms.add(mobile);
@@ -134,6 +153,17 @@ public class MobilePackageService {
         Balances balances = null;
         if (savedSambaza != null) {
             balances = getBalances(sentfrom);
+            Smsnotification smsnotification = new Smsnotification();
+            smsnotification.setMsgTo("+254"+reciever.getPhone());
+            smsnotification.setMessage("You have successfully recieved sambaza fuel prepay package from "+sender.getFullname()+" \n Phone number: 0"+sender.getPhone()+" \n for fuel worth amount "+savedSambaza.getAmtSent()+" Ksh");
+            smsnotification.setPending(true);
+            smsnotification.setCreatedate(new Date());
+            smsnotification.setSent(false);
+            smsnotification.setError(false);
+            smsnotification.setDelivered(false);
+            smsnotification.setRetrycount(0);
+            smsnotification.setRejected(false);
+            smsnotificationService.save(smsnotification);
         }
         return balances;
     }
@@ -183,9 +213,34 @@ public class MobilePackageService {
         }
         
         Balances b = new Balances();
-        b.setAccount(totalcashpurchases - totalcashusage);
-        b.setBundle((totalbundlepurchases + totalsambazarecieved) - (totalbundleusage + totalsambazasent));
+        b.setAccount((totalcashpurchases + totalsambazarecieved) - (totalcashusage + totalsambazasent));
+        b.setBundle(totalbundlepurchases  - totalbundleusage);
         b.setPoints(totalpoints - totalpointsused);
         return b;            
-    }    
+    }
+    
+    public List<MobilePurchase> getUserPurchases(int userid){
+        Users user = (Users) usersService.findbyId(userid);
+        List<MobilePurchase>  mobilePurchases = new ArrayList<>();
+        Set<PackagePurchase> packagePurchases = user.getPackagePurchases();
+        if (packagePurchases.size() > 0) {
+            for (PackagePurchase packagePurchase : packagePurchases) {
+                MobilePurchase mobilePurchase = new MobilePurchase();
+                mobilePurchase.setId(packagePurchase.getId());
+                mobilePurchase.setBalances(getBalances(userid));
+                mobilePurchase.setDatePurchased(packagePurchase.getDateofpurchase());
+                Bundle bundle = packagePurchase.getBundle();
+                FuelPackage fuelPackage = new FuelPackage();
+                fuelPackage.setId(bundle.getId());
+                fuelPackage.setAmount(Double.parseDouble(bundle.getBundlename()));
+                fuelPackage.setExpirydays(bundle.getExpirydays());
+                fuelPackage.setPoints(bundle.getPoints());
+                fuelPackage.setPriceOfPackage(bundle.getBundlevalue());
+                fuelPackage.setTypeOfPackage(bundle.getDivision().getDivisionname());
+                mobilePurchase.setApackage(fuelPackage);
+                mobilePurchases.add(mobilePurchase);
+            }
+        }
+        return mobilePurchases;
+    }
 }

@@ -23,6 +23,7 @@ public class FuelCar {
     @JsonDeserialize(using = DateAndTimeDeserializer.class)
     private Date dateFueled;
     private String stationid;
+    private String feedBack;
     private MobileUser user;
     private MobileVehicle vehicle;
     private Balances balances;
@@ -96,6 +97,14 @@ public class FuelCar {
         this.user = user;
     }
 
+    public String getFeedBack() {
+        return feedBack;
+    }
+
+    public void setFeedBack(String feedBack) {
+        this.feedBack = feedBack;
+    }
+    
     @Override
     public String toString() {
         return "FuelCar{" + "id=" + id + ", amount=" + amount + ", dateFueled=" + dateFueled + ", stationid=" + stationid + ", user=" + user + ", vehicle=" + vehicle + ", balances=" + balances + '}';

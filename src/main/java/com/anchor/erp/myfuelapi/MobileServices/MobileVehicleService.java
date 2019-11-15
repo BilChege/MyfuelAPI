@@ -8,8 +8,7 @@ package com.anchor.erp.myfuelapi.MobileServices;
 import com.anchor.erp.myfuelapi.Domain.Costcenter;
 import com.anchor.erp.myfuelapi.Domain.Dealer;
 import com.anchor.erp.myfuelapi.Domain.FuelUsage;
-import com.anchor.erp.myfuelapi.Domain.PackagePurchase;
-import com.anchor.erp.myfuelapi.Domain.UserRedemptions;
+import com.anchor.erp.myfuelapi.Domain.Smsnotification;
 import com.anchor.erp.myfuelapi.Domain.Users;
 import com.anchor.erp.myfuelapi.Domain.Vehicle;
 import com.anchor.erp.myfuelapi.Domain.Vehiclemake;
@@ -27,12 +26,13 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  *
  * @author Bilchege
  */
-
+@Transactional
 @Service
 public class MobileVehicleService {
     
@@ -63,6 +63,10 @@ public class MobileVehicleService {
     @Autowired
     @Qualifier("vehiclemodelService")
     private GenericService vehiclemodelService;
+    
+    @Autowired
+    @Qualifier("smsnotificationService")
+    private GenericService smsnotificationService;
     
     @Autowired
     private MobilePackageService mobilePackageService;
@@ -148,10 +152,44 @@ public class MobileVehicleService {
         fuelUsage.setCostcenter(c);
         FuelUsage savedUsage = (FuelUsage) fuelUsageService.save(fuelUsage);
         Users u = (Users) usersService.findbyId(fuelCar.getUser().getId());
-        
-        FuelCar response = new FuelCar();
-        Balances b = mobilePackageService.getBalances(fuelCar.getUser().getId());
-        response.setBalances(b);
+        FuelCar response = new FuelCar();        
+        if (savedUsage != null) {
+            Balances b = mobilePackageService.getBalances(fuelCar.getUser().getId());
+            response.setBalances(b);            
+            String attendanttel = null;
+            if (dc.getAttendanttel() != null) {
+                attendanttel = dc.getAttendanttel();
+            } else if (dc.getAttendanttel1() != null) {
+                attendanttel = dc.getAttendanttel1();
+            } else if (dc.getAttendanttel2() != null) {
+                attendanttel = dc.getAttendanttel2();
+            }
+            if (attendanttel != null) {
+                Smsnotification smsnotification1 = new Smsnotification();
+                smsnotification1.setCreatedate(new Date());
+                smsnotification1.setMsgTo(attendanttel);
+                smsnotification1.setMessage("Transaction Confirmed:\n Payment for fuel for vehicle "+savedUsage.getVehicle().getRegno()+" worth amount "+savedUsage.getAmount()+" Ksh has been recieved through MyFuel prepay Account for User "+u.getFullname());
+                smsnotification1.setPending(true);
+                smsnotification1.setCreatedate(new Date());
+                smsnotification1.setSent(false);
+                smsnotification1.setError(false);
+                smsnotification1.setDelivered(false);
+                smsnotification1.setRetrycount(0);
+                smsnotification1.setRejected(false);
+                smsnotificationService.save(smsnotification1);
+            }
+            Smsnotification smsnotification = new Smsnotification();
+            smsnotification.setMsgTo("+254"+u.getPhone());
+            smsnotification.setMessage("Transaction Confirmed: \nYou have Successfully refuelled vehicle : "+savedUsage.getVehicle().getRegno()+"\n with fuel worth amount "+savedUsage.getAmount()+" Ksh\n At Station : "+dc.getDealername()+"\n From your MyFuel prepay Account.");
+            smsnotification.setPending(true);
+            smsnotification.setCreatedate(new Date());
+            smsnotification.setSent(false);
+            smsnotification.setError(false);
+            smsnotification.setDelivered(false);
+            smsnotification.setRetrycount(0);
+            smsnotification.setRejected(false);
+            smsnotificationService.save(smsnotification);
+        }       
         return response;
     }
     
@@ -177,6 +215,18 @@ public class MobileVehicleService {
         return fcs;
     }
     
+    public FuelCar giveUserFeeBack(FuelCar fuelCar){
+        FuelUsage fuelUsage = (FuelUsage) fuelUsageService.findbyId(fuelCar.getId());
+        fuelUsage.setCustomerFeedback(fuelCar.getFeedBack());
+        fuelUsage.setTxndate(new Date());
+        FuelUsage updated = (FuelUsage) fuelUsageService.merge(fuelUsage);
+        FuelCar response = new FuelCar();
+        if (updated != null) {
+            response.setId(updated.getId());
+        }
+        return response;
+    }
+    
     public List<MobileVehicleMake> allVehiclemakes(){
         List<Vehiclemake> vehiclemakes = (List<Vehiclemake>) vehiclemakeService.findAll();
         List<MobileVehicleMake> makes = new ArrayList<>();
@@ -196,4 +246,26 @@ public class MobileVehicleService {
         return makes;
     }
     
+    public List<FuelCar> getUserUsages(int userid){
+        Users users = (Users) usersService.findbyId(userid);
+        List<FuelCar> fuelCars = new ArrayList<>();
+        Set<FuelUsage> fuelUsages = users.getFuelUsagesForUserId();
+        if (fuelUsages.size() > 0) {
+            for (FuelUsage fuelUsage : fuelUsages) {
+                FuelCar fuelCar = new FuelCar();
+                fuelCar.setId(fuelUsage.getId());
+                fuelCar.setAmount(fuelUsage.getAmount());
+                fuelCar.setBalances(mobilePackageService.getBalances(userid));
+                fuelCar.setDateFueled(fuelUsage.getCreatedate());
+                fuelCar.setStationid(fuelUsage.getDealer().getStationid()+" ("+fuelUsage.getDealer().getDealername()+")");
+                Vehicle vehicle = fuelUsage.getVehicle();
+                MobileVehicle mobileVehicle = new MobileVehicle();
+                mobileVehicle.setId(vehicle.getId());
+                mobileVehicle.setRegno(vehicle.getRegno());
+                fuelCar.setVehicle(mobileVehicle);
+                fuelCars.add(fuelCar);
+            }
+        }
+        return fuelCars;
+    }
 }

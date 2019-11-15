@@ -9,20 +9,24 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.hibernate.Criteria;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.criterion.Criterion;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  *
  * @author Bilchege
+ * @param <T>
+ * @param <I>
  */
 public abstract class AbstractDAO<T,I extends Serializable> implements GenericDAO<T, I>{
     
     @Autowired
     private SessionFactory sessionFactory;
-    private Class<T> persistentClass;
+    private final Class<T> persistentClass;
 
     public AbstractDAO(Class<T> persistentClass) {
         this.persistentClass = persistentClass;
@@ -107,6 +111,16 @@ public abstract class AbstractDAO<T,I extends Serializable> implements GenericDA
             query.setParameter(key, value);
         }
         return query.list();
-    }        
+    }
+
+    @Override
+    public List<T> findByCriterion(Criterion... criterion) {
+        Criteria criteria = sessionFactory.getCurrentSession().createCriteria(persistentClass);
+        for (Criterion criterion1 : criterion) {
+            criteria.add(criterion1);
+        }
+        return criteria.list();
+    } 
+    
 }
 

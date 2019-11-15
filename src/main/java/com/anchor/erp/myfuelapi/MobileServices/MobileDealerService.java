@@ -35,6 +35,7 @@ public class MobileDealerService {
             mobileDealer.setId(d.getId());
             mobileDealer.setName(d.getDealername());
             String [] coordinates = d.getGps().split(",");
+            mobileDealer.setStationid(d.getStationid());
             mobileDealer.setLatitude(Double.parseDouble(coordinates[0]));
             mobileDealer.setLongitude(Double.parseDouble(coordinates[1]));
             response.add(mobileDealer);

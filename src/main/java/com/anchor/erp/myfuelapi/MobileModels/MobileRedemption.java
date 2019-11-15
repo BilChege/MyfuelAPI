@@ -19,6 +19,7 @@ public class MobileRedemption {
     private int id;
     private OffersForMobile offer;
     private MobileUser user;
+    private String stationId;
     @JsonDeserialize(using = DateAndTimeDeserializer.class)
     @JsonProperty("datepurchased")
     private Date datepurchased;
@@ -49,6 +50,22 @@ public class MobileRedemption {
         this.offer = offer;
     }
 
+    public String getStationId() {
+        return stationId;
+    }
+
+    public void setStationId(String stationId) {
+        this.stationId = stationId;
+    }
+
+    public Date getDatepurchased() {
+        return datepurchased;
+    }
+
+    public void setDatepurchased(Date datepurchased) {
+        this.datepurchased = datepurchased;
+    }
+    
     public MobileUser getUser() {
         return user;
     }

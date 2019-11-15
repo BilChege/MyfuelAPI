@@ -53,6 +53,18 @@
             <artifactId>core</artifactId>
             <version>3.4.2</version>
         </dependency>
+        <!--QUARTZ-->
+        <dependency>
+            <groupId>org.quartz-scheduler</groupId>
+            <artifactId>quartz</artifactId>
+            <version>2.2.1</version>
+        </dependency>
+         <dependency>
+            <groupId>org.quartz-scheduler</groupId>
+            <artifactId>quartz-jobs</artifactId>
+            <version>2.2.1</version>
+        </dependency>
+        <!--END OF QUARTZ-->
         <!-- Spring -->
         <dependency>
             <groupId>com.mchange</groupId>

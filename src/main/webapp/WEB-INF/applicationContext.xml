@@ -62,4 +62,6 @@
         <property name="sessionFactory" ref="sessionFactory"/>
     </bean>
     
+    <bean class="com.anchor.erp.myfuelapi.Utils.QuartzConfig" id="quartzConfig"/>
+    
 </beans>

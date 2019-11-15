@@ -6,6 +6,7 @@ import com.anchor.erp.myfuelapi.Services.GenericService;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.hibernate.criterion.Criterion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,6 +74,11 @@ public class ReportsPermissionsmapService implements GenericService<ReportsPermi
 
     @Override
     public List<ReportsPermissionsmap> findByNamedQueryAndNamedParams(String name, Map<String, ? extends Object> params) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public List<ReportsPermissionsmap> findByCriterion(Criterion... criterion) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

@@ -6,11 +6,12 @@ import com.anchor.erp.myfuelapi.Services.GenericService;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.hibernate.criterion.Criterion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Service("dealerService")
 public class DealerService implements GenericService<Dealer> {
   @Autowired
   private DealerDAO entityDAO;
@@ -73,6 +74,11 @@ public class DealerService implements GenericService<Dealer> {
 
     @Override
     public List<Dealer> findByNamedQueryAndNamedParams(String name, Map<String, ? extends Object> params) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public List<Dealer> findByCriterion(Criterion... criterion) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

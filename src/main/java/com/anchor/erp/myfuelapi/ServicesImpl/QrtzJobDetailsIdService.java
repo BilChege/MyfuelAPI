@@ -3,11 +3,10 @@ package com.anchor.erp.myfuelapi.ServicesImpl;
 import com.anchor.erp.myfuelapi.DAOHelper.QrtzJobDetailsIdDAO;
 import com.anchor.erp.myfuelapi.Domain.QrtzJobDetailsId;
 import com.anchor.erp.myfuelapi.Services.GenericService;
-import java.lang.Override;
-import java.lang.String;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.hibernate.criterion.Criterion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,6 +74,11 @@ public class QrtzJobDetailsIdService implements GenericService<QrtzJobDetailsId>
 
     @Override
     public List<QrtzJobDetailsId> findByNamedQueryAndNamedParams(String name, Map<String, ? extends Object> params) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public List<QrtzJobDetailsId> findByCriterion(Criterion... criterion) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

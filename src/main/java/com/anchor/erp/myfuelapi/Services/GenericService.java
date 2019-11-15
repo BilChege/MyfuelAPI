@@ -8,6 +8,7 @@ package com.anchor.erp.myfuelapi.Services;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.hibernate.criterion.Criterion;
 
 /**
  *
@@ -36,4 +37,7 @@ public interface GenericService <T>{
     List<T> findByNamedQuery(String name, Object... params);
     
     List<T> findByNamedQueryAndNamedParams(String name,Map<String,? extends Object> params);
+    
+    List<T> findByCriterion(Criterion... criterion);
+
 }

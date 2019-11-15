@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.hibernate.criterion.Criterion;
 
 /**
  *
@@ -39,5 +40,7 @@ public interface GenericDAO<T,I extends Serializable> {
     List<T> findByNamedQuery(String name, Object... params);
     
     List<T> findByNamedQueryAndNamedParams(String name,Map<String,? extends Object> params);
+    
+    List<T> findByCriterion(Criterion... criterion);
     
 }

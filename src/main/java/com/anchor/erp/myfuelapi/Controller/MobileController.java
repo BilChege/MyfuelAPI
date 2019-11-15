@@ -135,6 +135,10 @@ public class MobileController {
     
     @RequestMapping(value = "/alldealers",method = RequestMethod.GET,produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody List<MobileDealers> allDealers(){
+        List<MobileDealers> dealerses = mobileDealerService.allDealers();
+        for (MobileDealers dealerse : dealerses) {
+            System.out.println(dealerse.toString());
+        }
         return mobileDealerService.allDealers();
     }
     
@@ -163,5 +167,30 @@ public class MobileController {
         MobileUser mobileUser = mobileUserService.verifySystemUser(phone);
         System.out.println("@@@@@@@@@@@@ RESPONSE : "+mobileUser.toString());
         return mobileUser;
+    }
+    
+    @RequestMapping(value = "/purchases/{userid}",method = RequestMethod.GET,produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<MobilePurchase> getUserPurchases(@PathVariable("userid") int userid){
+        System.out.println("@@@@@@@@@@@@ PURCHASES FOR USER : "+userid);
+        List<MobilePurchase> mobilePurchases = mobilePackageService.getUserPurchases(userid);        
+        for (MobilePurchase mobilePurchase : mobilePurchases) {
+            System.out.println(mobilePurchase.toString());                        
+        }
+        return mobilePurchases;
+    }
+    
+    @RequestMapping(value = "/usages/{userid}",method = RequestMethod.GET,produces = MediaType.APPLICATION_JSON_VALUE)
+    public @ResponseBody List<FuelCar> getUserUsages(@PathVariable("userid") int userid){
+        System.out.println("@@@@@@@@@@@@@ USAGES FOR USER : "+userid);
+        List<FuelCar> fuelCars = mobileVehicleService.getUserUsages(userid);
+        for (FuelCar fuelCar : fuelCars) {
+            System.out.println(fuelCar.toString());
+        }
+        return fuelCars;
+    }
+    
+    @RequestMapping(value = "/userfeedback",method = RequestMethod.PUT,consumes = MediaType.APPLICATION_JSON_VALUE,produces = MediaType.APPLICATION_JSON_VALUE)
+    public @ResponseBody FuelCar giveUserFeedback(@RequestBody FuelCar fuelCar){
+        return mobileVehicleService.giveUserFeeBack(fuelCar);
     }
 }

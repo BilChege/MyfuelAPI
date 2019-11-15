@@ -5,10 +5,12 @@
  */
 package com.anchor.erp.myfuelapi.MobileServices;
 
+import com.anchor.erp.myfuelapi.Domain.Dealer;
 import com.anchor.erp.myfuelapi.Domain.FuelUsage;
 import com.anchor.erp.myfuelapi.Domain.PackagePurchase;
 import com.anchor.erp.myfuelapi.Domain.Promotion;
 import com.anchor.erp.myfuelapi.Domain.Roles;
+import com.anchor.erp.myfuelapi.Domain.Smsnotification;
 import com.anchor.erp.myfuelapi.Domain.UserRedemptions;
 import com.anchor.erp.myfuelapi.Domain.Users;
 import com.anchor.erp.myfuelapi.Domain.Vehicle;
@@ -21,15 +23,18 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import org.hibernate.criterion.Restrictions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  *
  * @author nbs
  */
 
+@Transactional
 @Service
 public class MobileUserService {
     
@@ -56,6 +61,14 @@ public class MobileUserService {
     @Autowired
     @Qualifier("promotionService")
     private GenericService promotionService;
+    
+    @Autowired
+    @Qualifier("smsnotificationService")
+    private GenericService smsnotificationService;
+    
+    @Autowired
+    @Qualifier("dealerService")
+    private GenericService dealerService;
     
     @Autowired
     private MobilePackageService mobilePackageService;
@@ -93,7 +106,7 @@ public class MobileUserService {
             response.setLastName(names[1]);
             response.setPin(savedUser.getPin());
             response.setEmail(savedUser.getEmail());
-            response.setAccountPassword(savedUser.getUserpass());
+            response.setAccountPassword(savedUser.getUserpass());            
             
         }
         
@@ -118,6 +131,7 @@ public class MobileUserService {
         response.setPhone(requesteduser.getPhone());
         response.setPin(requesteduser.getPin());
         Set<Vehicle> vehicles = requesteduser.getVehiclesForCreatedby();      
+        
         
         List<MobileVehicle> mobileVehicles = new ArrayList<>();
         for (Vehicle v: vehicles){
@@ -171,39 +185,26 @@ public class MobileUserService {
         redemption.setPromotion((Promotion) promotionService.findbyId(mobileRedemption.getOffer().getId()));        
         redemption.setUsers((Users) usersService.findbyId(mobileRedemption.getUser().getId()));
         redemption.setDateRedeemed(mobileRedemption.getDatepurches());
-        
+        List<Dealer> dealers = dealerService.findByCriterion(Restrictions.eq("stationid", mobileRedemption.getStationId()));
+        Dealer dealer = dealers.get(0);
+        redemption.setDealer(dealer);
         UserRedemptions saveUserRedemption = (UserRedemptions) userRedemptionsService.save(redemption);
         Users u = (Users) usersService.findbyId(mobileRedemption.getUser().getId());
-        Set<PackagePurchase> purchases = (Set<PackagePurchase>) u.getPackagePurchases();
-        Set<FuelUsage> usages = (Set<FuelUsage>) u.getFuelUsagesForUserId();
-        Set<UserRedemptions> redemptionses = (Set<UserRedemptions>) u.getUserRedemptionses();
         
         Balances b = null;
         if (saveUserRedemption != null){
-            b = new Balances();
-            
-            double totalbundlepurchase = 0;
-            double totalcashpurchases = 0;
-            int totalpointspurchased = 0;
-            for (PackagePurchase p: purchases){
-                totalbundlepurchase += Double.parseDouble(p.getBundle().getBundlename());
-                totalcashpurchases += p.getBundle().getBundlevalue();
-                totalpointspurchased += p.getBundle().getPoints();
-            }
-            
-            double totalbundleusages = 0;
-            double totalcashusages = 0;            
-            for (FuelUsage fu:usages){
-                totalcashusages += fu.getAmount();
-                totalbundleusages += fu.getAmount()/10;
-            }           
-            int totalpointsused = 0;
-            for (UserRedemptions ur: redemptionses){
-                totalpointsused += ur.getPromotion().getPoints();
-            }
-            b.setBundle(totalbundlepurchase - totalbundleusages);
-            b.setAccount(totalcashpurchases - totalcashusages);
-            b.setPoints(totalpointspurchased - totalpointsused);
+            b = mobilePackageService.getBalances(mobileRedemption.getUser().getId());
+            Smsnotification smsnotification = new Smsnotification();
+            smsnotification.setMsgTo("+254"+u.getPhone());
+            smsnotification.setMessage("Transaction Confirmed : \n"+u.getFullname()+" has Redeemed "+saveUserRedemption.getPromotion().getPoints()+" Points from his or her MyFuel prepay account for Service "+saveUserRedemption.getPromotion().getPromotionname()+" ("+saveUserRedemption.getPromotion().getPromotiondesc()+")");
+            smsnotification.setPending(true);
+            smsnotification.setCreatedate(new Date());
+            smsnotification.setSent(false);
+            smsnotification.setError(false);
+            smsnotification.setDelivered(false);
+            smsnotification.setRetrycount(0);
+            smsnotification.setRejected(false);
+            smsnotificationService.save(smsnotification);
         }
         return b;
     }
@@ -211,6 +212,7 @@ public class MobileUserService {
     public Balances getUserBalances(int id){        
         return mobilePackageService.getBalances(id);
     }
+    
     
     public MobileUser verifySystemUser(String phone){
         String query = "select u.* from users u where u.phone = '"+phone+"'";

@@ -5,11 +5,7 @@
  */
 package com.anchor.erp.myfuelapi.MobileModels;
 
-import com.anchor.erp.myfuelapi.MobileServices.DateAndTimeDeserializer;
-import com.anchor.erp.myfuelapi.MobileServices.DateAndTimeSerializer;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.util.Date;
 
 /**
@@ -19,7 +15,8 @@ import java.util.Date;
 public class OffersForMobile {
     
     private int id;
-    private String promoname;
+    private String promoname;    
+    private String promocode;
     private String promodesc;
     private int points;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -44,6 +41,14 @@ public class OffersForMobile {
         this.id = id;
     }
 
+    public String getPromocode() {
+        return promocode;
+    }
+
+    public void setPromocode(String promocode) {
+        this.promocode = promocode;
+    }
+    
     public String getPromoname() {
         return promoname;
     }
